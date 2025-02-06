@@ -2,22 +2,39 @@ name: Daily Commit
 
 on:
   schedule:
-    - cron: '0 12 * * *'  # This runs the action daily at 12:00 PM UTC
-  workflow_dispatch: # Allows manual triggering
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
 
 jobs:
-  daily-commit:
+  update-and-push:
     runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
 
-    - name: Make a commit - Email 22f2001175@ds.study.iitm.ac.in
-      run: |
-        echo "Daily commit $(date)" >> daily_commit.txt
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "22f2001175@ds.study.iitm.ac.in"
-        git add daily_commit.txt
-        git commit -m "Add daily commit"
-        git push
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Fetch full history for proper merging
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+      - name: Pull latest changes
+        run: |
+          git pull origin master --rebase || echo "No need to pull"
+
+      - name: Make changes
+        run: |
+          echo "Daily commit on $(date)" >> daily_commit.txt
+
+      - name: Commit and push changes
+        run: |
+          git add .
+          git commit -m "Daily commit on $(date)" || echo "No changes to commit"
+          git push origin master
+
+      - name: Notify 23f2003751@ds.study.iitm.ac.in
+        run: echo "Commit made by GitHub Actions"
